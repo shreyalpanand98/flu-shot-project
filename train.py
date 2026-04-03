@@ -1,38 +1,55 @@
-import csv
 from collections import Counter, defaultdict
 from typing import Dict
+from sklearn.impute import SimpleImputer
+import pandas as pd
 
+training_features = pd.read_csv("data/training_set_features.csv")
 
-def build_feature_value_frequencies(
-    csv_path: str, missing_token: str = "__MISSING__"
-) -> Dict[str, Dict[str, int]]:
-    """
-    Return a nested dictionary with observed value frequencies per feature.
+median_cols = [
+    'h1n1_concern',
+    'h1n1_knowledge',
+    'behavioral_antiviral_meds',
+    'behavioral_avoidance',
+    'behavioral_face_mask',
+    'behavioral_wash_hands',
+    'behavioral_large_gatherings',
+    'behavioral_outside_home',
+    'behavioral_touch_face',
+    'doctor_recc_h1n1',
+    'doctor_recc_seasonal',
+    'chronic_med_condition',
+    'child_under_6_months',
+    'health_worker',
+    'health_insurance',
+    'opinion_h1n1_vacc_effective',
+    'opinion_h1n1_risk',
+    'opinion_h1n1_sick_from_vacc',
+    'opinion_seas_vacc_effective',
+    'opinion_seas_risk',
+    'opinion_seas_sick_from_vacc',
+    'household_adults',
+    'household_children'
+]
 
-    Output format:
-      {
-        "feature_name": {
-          "feature_value_1": frequency,
-          "feature_value_2": frequency,
-          ...
-        },
-        ...
-      }
-    """
-    feature_counters = defaultdict(Counter)
+most_frequent_cols = [
+    'age_group',
+    'education',
+    'race',
+    'sex',
+    'income_poverty',
+    'marital_status',
+    'rent_or_own',
+    'employment_status',
+    'hhs_geo_region',
+    'census_msa',
+    'employment_industry',
+    'employment_occupation'
+]
 
-    with open(csv_path, newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            for feature, value in row.items():
-                normalized_value = missing_token if value in (None, "") else str(value)
-                feature_counters[feature][normalized_value] += 1
+median_imputer = SimpleImputer(strategy="median")
+most_frequent_imputer = SimpleImputer(strategy="most_frequent")
 
-    # Convert defaultdict/Counter objects into plain dictionaries.
-    return {feature: dict(counter) for feature, counter in feature_counters.items()}
+training_features[median_cols] = median_imputer.fit_transform(training_features[median_cols])
+training_features[most_frequent_cols] = most_frequent_imputer.fit_transform(training_features[most_frequent_cols])
+print(training_features.isna().sum())
 
-
-if __name__ == "__main__":
-    frequencies = build_feature_value_frequencies("data/training_set_features.csv")
-    for key in frequencies:
-        print(key, frequencies[key], "\n")
